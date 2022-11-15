@@ -1,0 +1,14 @@
+@font-face {
+    font-family: ComicSans;
+    src: url(ComicSans.ttf);
+}
+
+body{
+    text-align: center;
+    margin: auto;
+    align-items: center;
+}
+
+.titulo{
+    font-family: ComicSans, sans-serif;
+}
