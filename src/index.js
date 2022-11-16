@@ -14,12 +14,3 @@ Array.prototype.slice.call(forms).forEach(function (form) {
 });
 
 
-document.getElementById("transacciones").innerHTML = `
-<tr>
-<td>Mark</td>
-<td>Otto</td>
-<td>@mdo</td>
-<td>Otto</td>
-<td>@mdo</td>
-</tr> 
-`;
