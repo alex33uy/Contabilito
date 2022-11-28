@@ -1,48 +1,50 @@
-const host_url = "https://6374330708104a9c5f7bc8a4.mockapi.io";
-const transacciones_url = host_url + "/transacciones";
 
-const forms = document.querySelectorAll(".needs-validation");
 Array.prototype.slice.call(forms).forEach(function (form) {
-  form.addEventListener(
-    "submit",
-    async function (event) {
-      if (!form.checkValidity()) {
-        event.preventDefault();
-        event.stopPropagation();
-      } else {
-        event.preventDefault();
-        event.stopPropagation();
-        const descripcion = document.getElementById("descripcion").value;
-        const tipoTransaccion = document.querySelectorAll(
-          "input[name='tipoTransaccion']:checked"
-        )[0].value;
-        const tipoIVA = document.querySelectorAll(
-          "input[name='tipoIVA']:checked"
-        )[0].value;
-        const subtotal = document.getElementById("subtotal").value;
+  if (form.id === "transaccion_form") {
+    form.addEventListener(
+      "submit",
+      async function (event) {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        } else {
+          event.preventDefault();
+          event.stopPropagation();
+          const producto = document.getElementById("producto").value;
+          const cantProd = document.getElementById("cantProducto").value;
+          const fecha = document.getElementById("fecha").value;
+          const precioUnitario =
+            document.getElementById("precioUnitario").value;
+          const tipoTransaccion = document.querySelectorAll(
+            "input[name='tipoTransaccion']:checked"
+          )[0].value;
+          const tipoIVA = document.querySelectorAll(
+            "input[name='tipoIVA']:checked"
+          )[0].value;
+          const subtotal = document.getElementById("subtotal").value;
 
-        const transaccion = {
-          descripcion,
-          tipoTransaccion,
-          tipoIVA,
-          subtotal,
-        };
+          const transaccion = {
+            producto,
+            cantProd,
+            precioUnitario,
+            fecha,
+            tipoTransaccion,
+            tipoIVA,
+            subtotal,
+          };
 
-        const res = await addTransaccion(transaccion);
-        console.trace(res);
-        showTransacciones();
-      }
-      form.classList.add("was-validated");
-    },
-    false
-  );
+          console.log(transaccion);
+
+          const res = await addTransaccion(transaccion);
+          console.trace(res);
+          history.go();
+        }
+        form.classList.add("was-validated");
+      },
+      false
+    );
+  }
 });
-
-const getTransacciones = async () => {
-  const res = await fetch(transacciones_url);
-  const data = await res.json();
-  return data;
-};
 
 const addTransaccion = async (transaccion) => {
   const res = await fetch(transacciones_url, {
@@ -54,21 +56,6 @@ const addTransaccion = async (transaccion) => {
   });
   const data = await res.json();
   return data;
-};
-
-// Funcion para calcular el IVA usando los datos del server mock
-const costoDeIVADev = (subtotal, tipoIVA) => {
-  let nuevoTipoIVA = tipoIVA % 3;
-  if (nuevoTipoIVA === 1) {
-    // 1 representa IVA MÍNIMO
-    return 0.1 * subtotal;
-  }
-  if (nuevoTipoIVA === 2) {
-    // 2 representa IVA BÁSICO
-    return 0.22 * subtotal;
-  } else {
-    return 0; // 0 representa IVA EXONERADO
-  }
 };
 
 /** Funcion para calcular el IVA */
@@ -85,29 +72,53 @@ const costoDeIVA = (subtotal, tipoIVA) => {
   }
 };
 
+const showFecha = (date) => {
+  console.trace("showFecha", date);
+  const fecha = new Date(date);
+  const options = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  };
+  return fecha.toLocaleDateString("es-ES", options);
+};
+
 const showTransacciones = async () => {
   const transacciones_container = document.getElementById("transacciones");
-  const transacciones = await getTransacciones();
+  transaccionesArray = await getTransacciones();
+  productsArray = await getProductos();
 
   let total_compras = 0;
   let total_ventas = 0;
 
   transacciones_container.innerHTML = "";
-  transacciones.forEach((transaccion) => {
-    const { id, descripcion, tipoTransaccion, tipoIVA, subtotal } = transaccion;
+  transaccionesArray.forEach(async (transaccion) => {
+    console.trace("transaccion", transaccion);
+    let {
+      id,
+      fecha,
+      idProducto: producto,
+      cantProd,
+      precioUnitario,
+      tipoTransaccion,
+      tipoIVA,
+      subtotal,
+    } = transaccion;
 
-    let iva = costoDeIVADev(subtotal, tipoIVA);
+    let iva = costoDeIVA(subtotal, tipoIVA);
     let total = Number(subtotal) + iva;
-
-    tipoTransaccion === "compra"
-      ? (total_compras += total)
-      : (total_ventas += total);
+    let nombreProducto = await getProductNameById(producto);
 
     transacciones_container.innerHTML += `
       <tr>
         <td>${id}</td>
-        <td>${descripcion}</td>
         <td>${tipoTransaccion}</td>
+        <td>${showFecha(fecha)}</td>
+        <td>${nombreProducto}</td>
+        <td>${cantProd}</td>
+        <td>${precioUnitario}</td>
         <td>${Number(subtotal).toFixed(2)}</td>
         <td>${iva.toFixed(2)}</td>
         <td>${total.toFixed(2)}</td>
@@ -117,6 +128,5 @@ const showTransacciones = async () => {
 
   document.getElementById("total_compras").innerHTML = total_compras.toFixed(2);
   document.getElementById("total_ventas").innerHTML = total_ventas.toFixed(2);
-
 };
 document.addEventListener("DOMContentLoaded", showTransacciones);
