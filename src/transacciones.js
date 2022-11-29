@@ -1,3 +1,18 @@
+const calcularSubtotal = () =>{
+  getProductos();
+
+  const subtotalInput = document.getElementById("subtotal");
+  const precioUnitarioInput = document.getElementById('precioUnitario');
+
+  const cantProd = Number(document.getElementById("cantProducto").value);
+  const productoId = Number(document.getElementById("producto").value);
+  const producto = productsArray.find( producto => producto.id == productoId);
+  const precioUnitario = Number(producto.precioUnitario)
+
+  precioUnitarioInput.value = precioUnitario;
+  subtotalInput.value = cantProd * precioUnitario;
+}
+
 
 Array.prototype.slice.call(forms).forEach(function (form) {
   if (form.id === "transaccion_form") {
@@ -60,20 +75,10 @@ const addTransaccion = async (transaccion) => {
 
 /** Funcion para calcular el IVA */
 const costoDeIVA = (subtotal, tipoIVA) => {
-  if (tipoIVA === 1) {
-    // 1 representa IVA MÍNIMO
-    return 0.1 * subtotal;
-  }
-  if (tipoIVA === 2) {
-    // 2 representa IVA BÁSICO
-    return 0.22 * subtotal;
-  } else {
-    return 0; // 0 representa IVA EXONERADO
-  }
+  return Number(tipoIVA) * subtotal;
 };
 
 const showFecha = (date) => {
-  console.trace("showFecha", date);
   const fecha = new Date(date);
   const options = {
     year: "numeric",
@@ -86,20 +91,22 @@ const showFecha = (date) => {
 };
 
 const showTransacciones = async () => {
+
   const transacciones_container = document.getElementById("transacciones");
+
   transaccionesArray = await getTransacciones();
   productsArray = await getProductos();
 
-  let total_compras = 0;
-  let total_ventas = 0;
+  let totalCompras = 0;
+  let totalVentas = 0;
 
   transacciones_container.innerHTML = "";
-  transaccionesArray.forEach(async (transaccion) => {
-    console.trace("transaccion", transaccion);
+
+  await transaccionesArray.forEach(async (transaccion) => {
     let {
       id,
       fecha,
-      idProducto: producto,
+      idProducto,
       cantProd,
       precioUnitario,
       tipoTransaccion,
@@ -108,8 +115,14 @@ const showTransacciones = async () => {
     } = transaccion;
 
     let iva = costoDeIVA(subtotal, tipoIVA);
-    let total = Number(subtotal) + iva;
-    let nombreProducto = await getProductNameById(producto);
+    let total = Number(subtotal) + Number(iva);
+    let nombreProducto = await getProductNameById(idProducto);
+
+    if(tipoTransaccion.toUpperCase() == "COMPRA"){
+      totalCompras += total;
+    } else {
+      totalVentas += total;
+    }
 
     transacciones_container.innerHTML += `
       <tr>
@@ -124,9 +137,15 @@ const showTransacciones = async () => {
         <td>${total.toFixed(2)}</td>
       </tr>
     `;
+
+    document.getElementById("total_compras").innerHTML = totalCompras.toFixed(2);
+    document.getElementById("total_ventas").innerHTML = totalVentas.toFixed(2);
   });
 
-  document.getElementById("total_compras").innerHTML = total_compras.toFixed(2);
-  document.getElementById("total_ventas").innerHTML = total_ventas.toFixed(2);
+  
+
+  
 };
 document.addEventListener("DOMContentLoaded", showTransacciones);
+
+

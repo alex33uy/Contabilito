@@ -8,11 +8,9 @@ let transaccionesArray = [];
 const forms = document.querySelectorAll(".needs-validation");
 
 const getProductNameById = async (id) => {
-    console.trace('getProductNameById', id);
     const res = await fetch(productos_url + "/" + id);
     const data = await res.json();
     const nombre = await data.nombre;
-    console.trace('getProductNameById', nombre);
     return nombre;
 };
 
